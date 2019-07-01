@@ -8,7 +8,7 @@ excerpt: >
 
 "Multi-armed bandit" (MAB) is a statistical problem where given several slot machines (sometimes known as "one armed bandits", because they "rob" the player) with unknown payouts, a gambler has to decide on which machines to play, in which order, and how many times to maximize the payout.
 
-![A slot machine](/assets/images/slot_machine.jpg)
+![A slot machine](/assets/img/slot_machine.jpg)
 *A slot machine. Photo by [Hello I'm Nik](https://unsplash.com/photos/NYpOl-PJDkM?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText) on [Unsplash](https://unsplash.com/search/photos/slot-machine?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText)*
 
 This problem requires a trade-off between exploring options (what if there is a slot machine that I haven't tried that allows me to win every single time?) and exploiting the machine that has the highest expected payoff. There isn't a unique solution to this problem, and in fact there are many different strategies, that usually alternate an **explorative stage** -- looking for the machine with the highest payout -- to an **exploitative stage** -- gambling on the machine that we believe provides the best rewards.

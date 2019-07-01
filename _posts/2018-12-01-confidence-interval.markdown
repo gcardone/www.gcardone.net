@@ -15,11 +15,11 @@ The “unknown population parameter” is usually the population mean, so in the
 
 For example, let's say you want to measure the average height of 30 year old Italian men[^1]. You randomly select 50 Italian men that fit your criteria, and plot their heights on a histogram. If you selected your sample fairly (i.e.: every candidate had an equal chance of being selected) then your histogram could looks something like this:
 
-![An histogram with 50 samples](/assets/images/random_normal_sample_1.svg)
+![An histogram with 50 samples](/assets/img/random_normal_sample_1.svg)
 
 The mean is 177.85cm, and the distribution is somewhat bell-shaped, as expected. However, there's nothing special about your selection process. If you run the same experiment the next day, you might get something like this:
 
-![Another histogram with 50 samples](/assets/images/random_normal_sample_2.svg)
+![Another histogram with 50 samples](/assets/img/random_normal_sample_2.svg)
 
 This time the mean is 174.06cm. These averages are different, and they are not the *actual* average that you could get if you measured the height of all 30 year old Italian men. However, they are close to the actual average. At this point you can probably guess that actual average height of 30 year old Italian men is probably between 170cm and 180cm[^2].
 
@@ -27,7 +27,7 @@ The key observation is that every time you sample the population you will getter
 
 The plot below shows 10 different measurement trials: when they have few samples their averages can be even very different, but as the number of samples increases, they converge to the real average.
 
-![Different samples converging to the same mean](/assets/images/multiple_trials.svg)
+![Different samples converging to the same mean](/assets/img/multiple_trials.svg)
 
 The confidence interval formalizes this concept.
 
@@ -87,7 +87,7 @@ As your sample set increases the lower and upper bound will get tighter on the m
 
 The image below shows the 99% and 90% confidence intervals calculated over a set whose size increases from 2 to 2000 samples:
 
-![90% and 99% confidence intervals](/assets/images/confidence_interval_increasing_samples.svg)
+![90% and 99% confidence intervals](/assets/img/confidence_interval_increasing_samples.svg)
 
 There are three things to note in this plot:
 
