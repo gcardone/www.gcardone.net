@@ -4,33 +4,73 @@ import csv
 import collections
 from ortools.sat.python import cp_model
 
+PRINT_PROGRESS=True
+
+class SolutionPrinter(cp_model.CpSolverSolutionCallback):
+
+    def __init__(self, variables):
+        super().__init__()
+        self._variables = variables
+        self._solution_count = 0
+
+    def on_solution_callback(self):
+        self._solution_count += 1
+        selected = []
+        print(f'Solution {self._solution_count}')
+        for v in self._variables:
+            if self.Value(v):
+                selected.append(str(v))
+        print('%d: %s\n' % (len(selected), ', '.join(selected)))
+
+
 if __name__ == '__main__':
+    # m is the Constraint Programming model
     m = cp_model.CpModel()
+
+    # visa_free is a map from a destination country to the set of passport
+    # that allow visa free travel
     visa_free = collections.defaultdict(set)
-    passports = {}
-    destinations = {}
+
+    # passport_vars maps passport names to variables managed by the CP-SAT
+    # model
+    passport_vars = {}
+
+    # destination_vars maps destination names to variables managed by the
+    # CP-SAT model
+    destination_vars = {}
+
+    # Load the passport data, provided by
+    # https://github.com/ilyankou/passport-index-dataset/ , each row is in
+    # the format:
+    # passport country, destination country, <type of access>
     with open('passport-index-tidy.csv', 'r') as f:
         datareader = csv.reader(f)
         for row in datareader:
+            # p is the passport being used
             p = row[0]
+            # d is the destination country
             d = row[1]
-            if p not in passports:
-                passports[p] = m.NewBoolVar(p)
-            if d not in destinations:
-                destinations[d] = m.NewBoolVar(f'{d} country')
+            p_var = passport_vars.setdefault(p, m.NewBoolVar(p))
+            d_var = destination_vars.setdefault(d, m.NewBoolVar(f'{d} cy'))
+            # '3' represents visa-free travel, '-1' means that the passport
+            # is issued by the destination country
             if row[2] == '3' or row[2] == '-1':
-                visa_free[d].add(p)
+                visa_free[d_var].add(p_var)
     for destination, allowed_passports in visa_free.items():
-        p_vars = [passports[p] for p in allowed_passports]
-        d_var = destinations[destination]
-        m.Add(sum(p_vars) >= 1).OnlyEnforceIf(d_var)
-        if len(allowed_passports) == 1:
-            m.AddHint(p_vars[0], 1)
-            print(f'{p_vars[0]} is required')
-    m.Add(sum(destinations.values()) == len(destinations))
-    m.Minimize(sum(passports.values()))
+        m.Add(sum(allowed_passports) >= 1).OnlyEnforceIf(destination)
+    m.Add(sum(destination_vars.values()) == len(destination_vars))
+    m.Minimize(sum(passport_vars.values()))
     solver = cp_model.CpSolver()
-    status = solver.Solve(m)
-    for p in sorted(passports):
-        if solver.Value(passports[p]):
-            print(f'{p}')
+    if PRINT_PROGRESS:
+        sorted_vars = [passport_vars[p] for p in sorted(passport_vars)]
+        solution_printer = SolutionPrinter(sorted_vars)
+        status = solver.SolveWithSolutionCallback(m, solution_printer)
+    else:
+        status = solver.Solve(m)
+
+    if status == cp_model.OPTIMAL:
+        selected_passports = [p for p in passport_vars
+                              if solver.Value(passport_vars[p])]
+        print(', '.join(sorted(selected_passports)))
+    else:
+        print('Unable to find an optimal solution')
