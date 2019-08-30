@@ -55,11 +55,24 @@ if __name__ == '__main__':
             # '3' represents visa-free travel, '-1' means that the passport
             # is issued by the destination country
             if row[2] == '3' or row[2] == '-1':
+                # Add passport p_var to the set of passports that allow
+                # visa-free travel to country d_var
                 visa_free[d_var].add(p_var)
+
+    # For each (destination, passports) pair…
     for destination, allowed_passports in visa_free.items():
+        # At least one of the passports that allow visa-free travel must be
+        # selected. In boolean logic this expression is equivalent to:
+        # dest and (passport_1 or passport_2 or …)
         m.Add(sum(allowed_passports) >= 1).OnlyEnforceIf(destination)
+
+    # We want to go to all destinations, therefore all destination_vars must
+    # be == 1
     m.Add(sum(destination_vars.values()) == len(destination_vars))
+
+    # We also want to minimize the number of selected passports
     m.Minimize(sum(passport_vars.values()))
+
     solver = cp_model.CpSolver()
     if PRINT_PROGRESS:
         sorted_vars = [passport_vars[p] for p in sorted(passport_vars)]
