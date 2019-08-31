@@ -35,10 +35,6 @@ if __name__ == '__main__':
     # model
     passport_vars = {}
 
-    # destination_vars maps destination names to variables managed by the
-    # CP-SAT model
-    destination_vars = {}
-
     # Load the passport data, provided by
     # https://github.com/ilyankou/passport-index-dataset/ , each row is in
     # the format:
@@ -51,24 +47,18 @@ if __name__ == '__main__':
             # d is the destination country
             d = row[1]
             p_var = passport_vars.setdefault(p, m.NewBoolVar(p))
-            d_var = destination_vars.setdefault(d, m.NewBoolVar(f'{d} cy'))
             # '3' represents visa-free travel, '-1' means that the passport
             # is issued by the destination country
             if row[2] == '3' or row[2] == '-1':
                 # Add passport p_var to the set of passports that allow
                 # visa-free travel to country d_var
-                visa_free[d_var].add(p_var)
+                visa_free[d].add(p_var)
 
     # For each (destination, passports) pair…
-    for destination, allowed_passports in visa_free.items():
+    for allowed_passports in visa_free.values():
         # At least one of the passports that allow visa-free travel must be
-        # selected. In boolean logic this expression is equivalent to:
-        # dest and (passport_1 or passport_2 or …)
-        m.Add(sum(allowed_passports) >= 1).OnlyEnforceIf(destination)
-
-    # We want to go to all destinations, therefore all destination_vars must
-    # be == 1
-    m.Add(sum(destination_vars.values()) == len(destination_vars))
+        # selected.
+        m.Add(sum(allowed_passports) >= 1)
 
     # We also want to minimize the number of selected passports
     m.Minimize(sum(passport_vars.values()))
