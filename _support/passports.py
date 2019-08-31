@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import csv
-import collections
 from ortools.sat.python import cp_model
 
 PRINT_PROGRESS=True
@@ -37,7 +36,7 @@ if __name__ == '__main__':
 
     # visa_free is a map from a destination country to the set of passport
     # that allow visa free travel
-    visa_free = collections.defaultdict(set)
+    visa_free = {}
 
     # passport_vars maps passport names to variables managed by the CP-SAT
     # model
@@ -49,12 +48,15 @@ if __name__ == '__main__':
     # passport country, destination country, <type of access>
     with open('passport-index-tidy.csv', 'r') as f:
         datareader = csv.reader(f)
+        # skip the header
+        next(datareader, None)
         for row in datareader:
             # p is the passport being used
             p = row[0]
             # d is the destination country
             d = row[1]
             p_var = passport_vars.setdefault(p, m.NewBoolVar(p))
+            passport_set = visa_free.setdefault(d, set())
             # '3' represents visa-free travel, '-1' means that the passport
             # is issued by the destination country
             if row[2] == '3' or row[2] == '-1':
@@ -63,7 +65,10 @@ if __name__ == '__main__':
                 visa_free[d].add(p_var)
 
     # For each set of passports that allows visa-free travelling to a country…
-    for destination, allowed_passports in visa_free.values():
+    for destination, allowed_passports in visa_free.items():
+        if not allowed_passports:
+            print(f'No valid passports for "{destination}". Ignoring.')
+            continue
         # …at least one of the passports must be selected
         m.Add(sum(allowed_passports) >= 1)
 
