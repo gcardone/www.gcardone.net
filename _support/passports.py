@@ -6,9 +6,15 @@ from ortools.sat.python import cp_model
 
 PRINT_PROGRESS=True
 
-class SolutionPrinter(cp_model.CpSolverSolutionCallback):
+class SolverCallback(cp_model.CpSolverSolutionCallback):
+    """SolverCallback prints intermediate solutions."""
 
     def __init__(self, variables):
+        """ Builds a new SolverCallback.
+
+        Args:
+          variables: list of variables to print.
+        """
         super().__init__()
         self._variables = variables
         self._solution_count = 0
@@ -17,6 +23,8 @@ class SolutionPrinter(cp_model.CpSolverSolutionCallback):
         self._solution_count += 1
         selected = []
         print(f'Solution {self._solution_count}')
+        # Print only the selected passports, which are far fewer than the
+        # complete list of passports
         for v in self._variables:
             if self.Value(v):
                 selected.append(str(v))
@@ -54,10 +62,9 @@ if __name__ == '__main__':
                 # visa-free travel to country d_var
                 visa_free[d].add(p_var)
 
-    # For each (destination, passports) pair…
-    for allowed_passports in visa_free.values():
-        # At least one of the passports that allow visa-free travel must be
-        # selected.
+    # For each set of passports that allows visa-free travelling to a country…
+    for destination, allowed_passports in visa_free.values():
+        # …at least one of the passports must be selected
         m.Add(sum(allowed_passports) >= 1)
 
     # We also want to minimize the number of selected passports
@@ -66,7 +73,9 @@ if __name__ == '__main__':
     solver = cp_model.CpSolver()
     if PRINT_PROGRESS:
         sorted_vars = [passport_vars[p] for p in sorted(passport_vars)]
-        solution_printer = SolutionPrinter(sorted_vars)
+        # Build a SolverCallback that prints all the selected passports
+        # whenever a solution (possibly non-optimal) is found
+        solution_printer = SolverCallback(sorted_vars)
         status = solver.SolveWithSolutionCallback(m, solution_printer)
     else:
         status = solver.Solve(m)
