@@ -4,7 +4,7 @@ import csv
 import z3
 
 if __name__ == '__main__':
-    o = z3.Optimize()
+    optimizer = z3.Optimize()
 
     # visa_free is a map from a destination country to the set of passport
     # that allow visa free travel
@@ -31,7 +31,7 @@ if __name__ == '__main__':
                 p_var = passport_vars[p]
             else:
                 p_var = z3.Int(p)
-                o.add(p_var >= 0, p_var <= 1)
+                optimizer.add(p_var >= 0, p_var <= 1)
                 passport_vars[p] = p_var
             passport_set = visa_free.setdefault(d, set())
             # '3' represents visa-free travel, '-1' means that the passport
@@ -47,13 +47,13 @@ if __name__ == '__main__':
             print(f'No valid passports for {destination}. Ignoring.')
             continue
         # …at least one of the passports must be selected
-        o.add(sum(allowed_passports) >= 1)
+        optimizer.add(sum(allowed_passports) >= 1)
 
     # We also want to minimize the number of selected passports
-    o.minimize(sum(passport_vars.values()))
+    optimizer.minimize(sum(passport_vars.values()))
 
-    if o.check() == z3.sat:
-        m = o.model()
+    if optimizer.check() == z3.sat:
+        m = optimizer.model()
         selected_passports = []
         for p_name, p_var in passport_vars.items():
             if m[p_var] == 1:

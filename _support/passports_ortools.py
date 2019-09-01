@@ -31,8 +31,8 @@ class SolverCallback(cp_model.CpSolverSolutionCallback):
 
 
 if __name__ == '__main__':
-    # m is the Constraint Programming model
-    m = cp_model.CpModel()
+    # model is the Constraint Programming model
+    model = cp_model.CpModel()
 
     # visa_free is a map from a destination country to the set of passport
     # that allow visa free travel
@@ -55,7 +55,7 @@ if __name__ == '__main__':
             p = row[0]
             # d is the destination country
             d = row[1]
-            p_var = passport_vars.setdefault(p, m.NewBoolVar(p))
+            p_var = passport_vars.setdefault(p, model.NewBoolVar(p))
             passport_set = visa_free.setdefault(d, set())
             # '3' represents visa-free travel, '-1' means that the passport
             # is issued by the destination country
@@ -70,10 +70,10 @@ if __name__ == '__main__':
             print(f'No valid passports for {destination}. Ignoring.')
             continue
         # …at least one of the passports must be selected
-        m.Add(sum(allowed_passports) >= 1)
+        model.Add(sum(allowed_passports) >= 1)
 
     # We also want to minimize the number of selected passports
-    m.Minimize(sum(passport_vars.values()))
+    model.Minimize(sum(passport_vars.values()))
 
     solver = cp_model.CpSolver()
     if PRINT_PROGRESS:
