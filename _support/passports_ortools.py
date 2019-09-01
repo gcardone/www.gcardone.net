@@ -67,7 +67,7 @@ if __name__ == '__main__':
     # For each set of passports that allows visa-free travelling to a country…
     for destination, allowed_passports in visa_free.items():
         if not allowed_passports:
-            print(f'No valid passports for "{destination}". Ignoring.')
+            print(f'No valid passports for {destination}. Ignoring.')
             continue
         # …at least one of the passports must be selected
         m.Add(sum(allowed_passports) >= 1)
