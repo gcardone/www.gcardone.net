@@ -81,9 +81,9 @@ if __name__ == '__main__':
         # Build a SolverCallback that prints all the selected passports
         # whenever a solution (possibly non-optimal) is found
         solution_printer = SolverCallback(sorted_vars)
-        status = solver.SolveWithSolutionCallback(m, solution_printer)
+        status = solver.SolveWithSolutionCallback(model, solution_printer)
     else:
-        status = solver.Solve(m)
+        status = solver.Solve(model)
 
     if status == cp_model.OPTIMAL:
         selected_passports = [p for p in passport_vars
