@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import csv
+import time
 from ortools.sat.python import cp_model
 
 PRINT_PROGRESS=True
@@ -17,11 +18,13 @@ class SolverCallback(cp_model.CpSolverSolutionCallback):
         super().__init__()
         self._variables = variables
         self._solution_count = 0
+        self._start = time.time()
 
     def on_solution_callback(self):
         self._solution_count += 1
         selected = []
-        print(f'Solution {self._solution_count}')
+        delta = time.time() - self._start
+        print(f'Solution {self._solution_count} after {delta:.2f} seconds')
         # Print only the selected passports, which are far fewer than the
         # complete list of passports
         for v in self._variables:
