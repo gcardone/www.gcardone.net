@@ -20,6 +20,7 @@ node_modules
 vendor/bundle
 .bundle
 .sass-cache
+.jekyll-cache
 .jekyll-metadata
 *.gem
 _zip
