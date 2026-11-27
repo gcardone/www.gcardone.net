@@ -11,7 +11,7 @@ excerpt: >
 
 # In the previous episode…
 
-In [a previous post]({% link _posts/2021-03-04-blistering-fast-mandelbrot-in-rust.markdown %}) I implemented a renderer for the [Mandelbrot set](https://en.wikipedia.org/wiki/Mandelbrot_set) in Rust. When I ran it to render a 14000 x 8000 image the running time was:
+In [a previous post]({% link _posts/2021-03-04-blistering-fast-mandelbrot-in-rust.markdown %}), I implemented a renderer for the [Mandelbrot set](https://en.wikipedia.org/wiki/Mandelbrot_set) in Rust. When I ran it to render a 14000 x 8000 image, the running time was:
 
 ```
 Executing naive... 18.437s
@@ -19,7 +19,7 @@ Executing avxrayon... 6.668s
 Executing opencl... 0.816s
 ```
 
-And when rendering a 56000 x 32000 image the running time was:
+And when rendering a 56000 x 32000 image, the running time was:
 
 ```
 Executing naive... 314.635s
@@ -31,7 +31,7 @@ I was disappointed by the speedup, so I decided to implement the same algorithms
 
 # C++ implementation
 
-I won't spend time explaining the algorithms here, I will just copy the C++ code. All the algorithms are pretty much perfect maps of the Rust code that I wrote in my [previous post]({% link _posts/2021-03-04-blistering-fast-mandelbrot-in-rust.markdown %}).
+I won't spend time explaining the algorithms here; I will just copy the C++ code. All the algorithms are pretty much perfect maps of the Rust code that I wrote in my [previous post]({% link _posts/2021-03-04-blistering-fast-mandelbrot-in-rust.markdown %}).
 
 ```cpp
 // Use https://github.com/lvandeve/lodepng/ for PNG encoding.
@@ -49,9 +49,9 @@ I won't spend time explaining the algorithms here, I will just copy the C++ code
 
 inline unsigned char const MAX_ITERATIONS = 255;
 
-// Generic Mandlebrot generator. The first argument is the image width, the
+// Generic Mandelbrot generator. The first argument is the image width, the
 // second argument is the image height. The third argument is the output
-// buffer: each element contains the number of iterations of a pixels. The
+// buffer: each element contains the number of iterations of a pixel. The
 // pixels are serialized sequentially by row.
 typedef std::function<void(unsigned int, unsigned int, unsigned char *)>
     MandelbrotGenerator;
@@ -84,7 +84,6 @@ So far, so good. The code above is the simple implementation of the naive algori
 The algorithm is embarrassingly parallel, so we can use [OpenMP](https://www.openmp.org) without worrying too much to parallelize it. To do so, it's sufficient to add `#pragma omp parallel for` before the loop to parallelize, and pass `-fopenmp` to `g++`:
 
 ```cpp
-
 // Same as above, but ask OpenMP to parallelize the external loop. Effort-wise
 // this is close to using Rayon in Rust.
 void openmp(unsigned int w, unsigned int h, unsigned char *output) {
@@ -120,7 +119,7 @@ void avx2(unsigned int w, unsigned int h, unsigned char *output) {
 #pragma omp parallel for
   for (unsigned int c = 0; c < w; c++) {
     float x0 = (static_cast<float>(c) / static_cast<float>(w)) * 3.5 - 2.5;
-    // Initialize ax0 as 8 packed single precision float initialized to x0.
+    // Initialize ax0 as 8 packed single-precision floats initialized to x0.
     auto ax0 = _mm256_set1_ps(x0);
     // r is the row to process, that is the y coordinate. We step by 8
     // because AVX2 packs 8 floats in a single register.
@@ -143,7 +142,7 @@ void avx2(unsigned int w, unsigned int h, unsigned char *output) {
       // ay = 0
       auto ay = _mm256_set1_ps(0.0);
       // aiters contains the number of iterations for each pixel,
-      // initializeda to 0.
+      // initialized to 0.
       auto aiters = _mm256_set1_epi32(0);
       // If a packed integer in amask is set to 1, then the iterator in
       // aiters in the same position will be incremented. This allows us
@@ -178,7 +177,7 @@ void avx2(unsigned int w, unsigned int h, unsigned char *output) {
         if (_mm256_testz_si256(amask, _mm256_set1_epi32(-1))) {
           break;
         }
-        // Unpack the iteration values in a old-fashioned array
+        // Unpack the iteration values in an old-fashioned array
         int iters[8];
         _mm256_maskstore_epi32(iters, _mm256_set1_epi32(-1), aiters);
         for (int i = 0; i < 8; i++) {
@@ -191,10 +190,10 @@ void avx2(unsigned int w, unsigned int h, unsigned char *output) {
 }
 ```
 
-And finally: OpenCL. OpenCL API is designed for C, so it's not the most pleasant thing to use in C++:
+And finally: OpenCL. The OpenCL API is designed for C, so it's not the most pleasant thing to use in C++:
 
 ```cpp
-// Version using OpenCl.
+// Version using OpenCL.
 void opencl(unsigned int w, unsigned int h, unsigned char *output) {
   cl_command_queue command_queue;
   cl_context context;
@@ -209,8 +208,8 @@ void opencl(unsigned int w, unsigned int h, unsigned char *output) {
   size_t buf_size = static_cast<size_t>(w) * static_cast<size_t>(h);
   // clang-format off
   // This is the code of an OpenCL kernel. An OpenCL kernel is the code that
-  // runs on an device. Note that this is technically a one-liner because
-  // There are no "\n". Rust makes this less error-prone because it natively
+  // runs on a device. Note that this is technically a one-liner because
+  // there are no "\n"s. Rust makes this less error-prone because it natively
   // supports multi-line string constants.
   const char *src =
     "kernel void mandelbrot(__global uchar* buffer, uint width, uint height,"
@@ -256,7 +255,7 @@ void opencl(unsigned int w, unsigned int h, unsigned char *output) {
   // this code assumes that there's only one OpenCL-aware GPU.
   clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
   // Create an OpenCL context, which is the environment where a kernel
-  // executes. Here we are creating a context associated to just one device.
+  // executes. Here we are creating a context associated with just one device.
   context = clCreateContext(NULL, 1, &device, NULL, NULL, NULL);
   // A command queue is a container of commands that should be executed on a
   // device.
@@ -290,7 +289,7 @@ void opencl(unsigned int w, unsigned int h, unsigned char *output) {
 }
 ```
 
-The last bit is a simple function that runs a Mandelbrot generator function and optionally saves its output to a PNG file. I decided to use https://github.com/lvandeve/lodepng/ to write the PNG file. I tried https://github.com/nothings/stb/ too, which seems to be more popular, but it didn't work for larger PNG files.
+The last bit is a simple function that runs a Mandelbrot generator function and optionally saves its output to a PNG file. I decided to use [lodepng](https://github.com/lvandeve/lodepng/) to write the PNG file. I tried [stb](https://github.com/nothings/stb/) too, which seems to be more popular, but it didn't work for larger PNG files.
 
 Anyway, here's the code:
 
@@ -338,7 +337,7 @@ int main() {
 }
 ```
 
-Now that we have everything ready we can compile and run it:
+Now that we have everything ready, we can compile and run it:
 
 ```
 $ g++ -Wall -pedantic -std=c++17 -fopenmp -mavx2 -O3 lodepng.cpp mandelbrot.cpp -lOpenCL && ./a.out
@@ -364,29 +363,29 @@ So, to summarize:
 
 C++:
 
-Algorithm    | 14000 x 8000   | 56000 x 32000
--------------|----------------|---------------
-Naive        | 27.262 (1x)    | 950.421 (1x)
-OpenMP       | 7.513 (3.6x)   | 257.737 (3.6x)
-AVX2         | 0.738 (36.9x)  | 102.910 (4.9x)
-OpenCL       | 0.207 (131.7x) | 0.935 (1016x)
+Algorithm    | 14000 x 8000    | 56000 x 32000
+-------------|-----------------|---------------
+Naive        | 27.262s (1x)    | 950.421s (1x)
+OpenMP       | 7.513s (3.6x)   | 257.737s (3.6x)
+AVX2         | 0.738s (36.9x)  | 102.910s (4.9x)
+OpenCL       | 0.207s (131.7x) | 0.935s (1016x)
 
 
 Rust:
 
-Algorithm    | 14000 x 8000 | 56000 x 32000
--------------|--------------|--------------
-Naive        | 18.437s (1x) | 314.635 (1x)
-AVX2 + Rayon | 6.668 (2.7x) | 119.919 (2.6x)
-OpenCL       | 0.816 (22x)  | 9.468 (33.2x)
+Algorithm    | 14000 x 8000  | 56000 x 32000
+-------------|---------------|---------------
+Naive        | 18.437s (1x)  | 314.635s (1x)
+AVX2 + Rayon | 6.668s (2.7x) | 119.919s (2.6x)
+OpenCL       | 0.816s (22x)  | 9.468s (33.2x)
 
 A few observations:
 
-- The naive algorithm is between 1.4x and 3x faster in Rust than C++
+- The naive algorithm is between 1.4x and 3x faster in Rust than in C++
 - The OpenCL implementation is _massively_ more performant in C++
-- C++ performances vary wildly, the decrease in performance of AVX2 suggest that, well, I should run every algorithm several times ;)
+- C++ performance varies wildly; the decrease in performance of AVX2 suggests that, well, I should run every algorithm several times ;)
 
-So, things to do in a follow up post:
+So, things to do in a follow-up post:
 
 - compare the generated assembly to understand why optimized C++ is faster than Rust
-- run the algos several times because seriously, don't trust benchmarks of a function that has been ran exactly once :)
+- run the algos several times because seriously, don't trust benchmarks of a function that has been run exactly once :)

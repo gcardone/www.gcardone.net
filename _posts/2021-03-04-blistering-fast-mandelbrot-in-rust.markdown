@@ -11,15 +11,15 @@ excerpt: >
 
 # The Mandelbrot set
 
-The Mandelbrot set is the set of complex numbers $$c$$ for which the function $$f_c(z)=z^2+c$$ does not escape to infinity when iterated starting from $$z=0$$. In the classic multicolored rendering that everyone is familiar with each color represents how quickly the iteration diverged.
+The Mandelbrot set is the set of complex numbers $$c$$ for which the function $$f_c(z)=z^2+c$$ does not escape to infinity when iterated starting from $$z=0$$. In the classic multicolored rendering that everyone is familiar with, each color represents how quickly the iteration diverged.
 
 ![A rendering of the Mandelbrot set](/assets/img/mandelbrot.png)
 
-In this article I'll show how we can render the image above[^1] in Rust using increasingly complex and faster approaches.
+In this article, I'll show how we can render the image above[^1] in Rust using increasingly complex and faster approaches.
 
 # The algorithm in pseudocode
 
-Obviously Wikipedia as an article on [plotting algorithms for the Mandelbrot set](https://en.wikipedia.org/wiki/Plotting_algorithms_for_the_Mandelbrot_set). The basic algorithm is very straightforward:
+Obviously, Wikipedia has an article on [plotting algorithms for the Mandelbrot set](https://en.wikipedia.org/wiki/Plotting_algorithms_for_the_Mandelbrot_set). The basic algorithm is very straightforward:
 
 ```
 for each pixel (Px, Py) on the screen:
@@ -33,7 +33,7 @@ for each pixel (Px, Py) on the screen:
     xtemp = x*x - y*y + x0
     y = 2*x*y + y0
     x = xtemp
-    itearation = iteration + 1
+    iteration = iteration + 1
   color = palette[iteration]
   put color at coordinates Px, Py
 ```
@@ -87,7 +87,7 @@ fn runalgo(name: &str, w: u32, h: u32, save_image: bool, algo: fn(u32, u32) -> i
     println!("{}s", elapsed);
 }
 
-// Render the Mandelbrot set. w and h are respectively the widht and height of
+// Render the Mandelbrot set. w and h are respectively the width and height of
 // the output image. Refer to
 // https://en.wikipedia.org/wiki/Plotting_algorithms_for_the_Mandelbrot_set for
 // a detailed explanation of this algorithm.
@@ -138,7 +138,7 @@ Executing naive... 18.437s
 While that runs, `htop` shows the following CPU load:
 
 ![htop load](/assets/img/mandelbrot_naive_htop.png)
-*Only one core is busy calculating precious Mandelbrot pixels, all the other cores are idling.*
+*Only one core is busy calculating precious Mandelbrot pixels; all the other cores are idling.*
 
 I should run the algorithm several times to get a median or 95-ile running time, but it's unlikely that it will suddenly take 2 seconds. Let's see how it can be sped up.
 
@@ -146,16 +146,16 @@ I should run the algorithm several times to get a median or 95-ile running time,
 
 There are several clever ideas to increase the speed of the algorithm above:
 
-- with some algebraic manipulation it's possible to reduce the number of multiplications in the inner loop from 6 to 3 (see [here](https://en.wikipedia.org/wiki/Plotting_algorithms_for_the_Mandelbrot_set#Optimized_escape_time_algorithms);
-- exploit the fact that the Mandelbrot set is symmetric about the x-axis and compute values only in the upper part of the cartesian plane and flip it to render the lower part, but this works only for rendering the whole fractal, it's not useful for a zoomed-in version;
-- check if a point is within the main bulb of the set (see [here](https://en.wikipedia.org/wiki/Plotting_algorithms_for_the_Mandelbrot_set#Cardioid_/_bulb_checking)
-- check if a value reached while iterating a pixel has been reached before, i.e.: memoize the main algorithm
+- with some algebraic manipulation it's possible to reduce the number of multiplications in the inner loop from 6 to 3 (see [here](https://en.wikipedia.org/wiki/Plotting_algorithms_for_the_Mandelbrot_set#Optimized_escape_time_algorithms));
+- exploit the fact that the Mandelbrot set is symmetric about the x-axis and compute values only in the upper part of the Cartesian plane and flip it to render the lower part, but this works only for rendering the whole fractal; it's not useful for a zoomed-in version;
+- check if a point is within the main bulb of the set (see [here](https://en.wikipedia.org/wiki/Plotting_algorithms_for_the_Mandelbrot_set#Cardioid_/_bulb_checking));
+- check if a value reached while iterating a pixel has been reached before, i.e., memoize the main algorithm.
 
-These options can all provide some speed ups. But let's see if we can do better by simply applying some good ol' brute force.
+These options can all provide some speedups. But let's see if we can do better by simply applying some good ol' brute force.
 
 # Parallelism: AVX2 and Rayon
 
-The Mandelbrot algorithm is an _embarrassingly parallel_ problem: the colour of each pixel can be calculated independently from all other pixels, therefore it can be trivially parallelized. I decided to parallelize the algorithm above in two ways: by using [AVX2](https://en.wikipedia.org/wiki/Advanced_Vector_Extensions) extensions to compute several pixels in parallel using wide CPU registers, and [Rayon](https://github.com/rayon-rs/rayon) to parallelize across all available cores.
+The Mandelbrot algorithm is an _embarrassingly parallel_ problem: the colour of each pixel can be calculated independently from all other pixels; therefore, it can be trivially parallelized. I decided to parallelize the algorithm above in two ways: by using [AVX2](https://en.wikipedia.org/wiki/Advanced_Vector_Extensions) extensions to compute several pixels in parallel using wide CPU registers, and [Rayon](https://github.com/rayon-rs/rayon) to parallelize across all available cores.
 
 ## The shortest AVX2 crash course ever
 
@@ -164,11 +164,11 @@ AVX2 is an extension to the x86 instruction set that provides wide registers con
 - the only datatypes that we'll need are:
   - `__m256`: a 256-bit vector packing 8 single-precision floats;
   - `__m256i`: a 256-bit vector packing 8 32-bit integers;
-- AVX/AVX2 instruction names have the pattern `_mm<bit width>_<function>_<data type>`. Intel's [intrinsics guide](https://software.intel.com/sites/landingpage/IntrinsicsGuide/) is a handy guide to all AVX instructions. For example `__m256i _mm256_add_epi32 (__m256i a, __m256i b)` adds packed 32-bit integers in `a` and `b`, and store the results in `dst`.
+- AVX/AVX2 instruction names have the pattern `_mm<bit width>_<function>_<data type>`. Intel's [intrinsics guide](https://software.intel.com/sites/landingpage/IntrinsicsGuide/) is a handy guide to all AVX instructions. For example, `__m256i _mm256_add_epi32 (__m256i a, __m256i b)` adds packed 32-bit integers in `a` and `b`, and stores the results in `dst`.
 
-Note that usinv AVX/AVX2/AVX-512 is not guaranteed to speed up your code, or to speed it up by a factor of 8x. For example Intel CPUs can downclock cores because AVX-512-heavy workloads can cause parts of the [die](https://en.wikipedia.org/wiki/Die_(integrated_circuit)) to warm up unevenly[^2]. In particular a machine that runs both AVX and non-AVX code at the same time might be negatively impacted, see [Travis Downs' analysis of Intel AVX-512 transitions](https://travisdowns.github.io/blog/2020/01/17/avxfreq1.html), a [cautionary tale from Cloudflare](https://blog.cloudflare.com/on-the-dangers-of-intels-frequency-scaling/), and [Daniel Lemire's analysis](https://lemire.me/blog/?s=avx-512+throttling). Anyway writing AVX2 for a Mandelbrot fractal sounds like fun, and it's unlikely that a Fortune-100 company will rely on this code. So: whatevs. Let's use AVX2 (only a very small subset of CPUs support AVX-512 and my CPU is not one of those).
+Note that using AVX/AVX2/AVX-512 is not guaranteed to speed up your code, or to speed it up by a factor of 8x. For example, Intel CPUs can downclock cores because AVX-512-heavy workloads can cause parts of the [die](https://en.wikipedia.org/wiki/Die_(integrated_circuit)) to warm up unevenly[^2]. In particular, a machine that runs both AVX and non-AVX code at the same time might be negatively impacted; see [Travis Downs' analysis of Intel AVX-512 transitions](https://travisdowns.github.io/blog/2020/01/17/avxfreq1.html), a [cautionary tale from Cloudflare](https://blog.cloudflare.com/on-the-dangers-of-intels-frequency-scaling/), and [Daniel Lemire's analysis](https://lemire.me/blog/?s=avx-512+throttling). Anyway, writing AVX2 for a Mandelbrot fractal sounds like fun, and it's unlikely that a Fortune-100 company will rely on this code. So: whatevs. Let's use AVX2 (only a very small subset of CPUs support AVX-512 and my CPU is not one of those).
 
-I will heavily comment the AVX code above, but take a look to [Code Project](https://www.codeproject.com/Articles/874396/Crunching-Numbers-with-AVX-and-AVX) for a more verbose crash course.
+I will heavily comment the AVX code below, but take a look at [Code Project](https://www.codeproject.com/Articles/874396/Crunching-Numbers-with-AVX-and-AVX) for a more verbose crash course.
 
 ## The shortest Rust Rayon crash course ever pinky promise
 
@@ -216,7 +216,7 @@ fn avxrayon(w: u32, h: u32) -> image::RgbImage {
                 let process_column = |c: u32| -> Vec<Pixel> {
                     let mut v = vec![];
                     let x0 = ((c as f32) / (w as f32)) * 3.5 - 2.5;
-                    // Initialize ax0 as 8 packed single precision float initialized to x0.
+                    // Initialize ax0 as 8 packed single-precision floats initialized to x0.
                     let ax0 = _mm256_set1_ps(x0);
                     // r is the row to process, that is the y coordinate. We step by 8 because
                     // AVX2 packs 8 floats in a single register.
@@ -333,24 +333,24 @@ I have some theories on why this might be happening:
 
 - perhaps the generated code is not inlining enough (I tried adding `lto = true` to `Cargo.toml` but it didn't help);
 - probably the generated code is not as efficient as handcrafted assembly;
-- perhaps achieving a 8x speedup with vectorization intrinsics (i.e.: all the `__mm<foo> functions`) requires being more careful when juggling variables;
+- perhaps achieving an 8x speedup with vectorization intrinsics (i.e., all the `__mm<foo>` functions) requires being more careful when juggling variables;
 - perhaps the code does not fit in the micro-op cache, which causes them to be decoded more often than necessary;
-- apparently some Intel CPUs apply some power saving algorithm and turn off the most expensive computing units when they're not in use, so maybe performances would improve if I let the code run for longer;
-- I wrote the code above to be readable rather than being optimized, which may cause some performance hits. For example, AVX instructions can be non-destructive (e.g.: `C = A + B`) and destructive (e.g.: `A = A + B`). Mixing the two causes pipeline stalls and code slowdowns.
+- apparently some Intel CPUs apply some power saving algorithm and turn off the most expensive computing units when they're not in use, so maybe performance would improve if I let the code run for longer;
+- I wrote the code above to be readable rather than being optimized, which may cause some performance hits. For example, AVX instructions can be non-destructive (e.g., `C = A + B`) and destructive (e.g., `A = A + B`). Mixing the two causes pipeline stalls and code slowdowns.
 
 So, I need to analyze this more to understand how to speed it up. But until then, let's try something different to make the code go faster.
 
 # Even more parallelism with OpenCL
 
-[OpenCL](https://github.com/KhronosGroup/OpenCL-Guide) is a framework for writing code that can compiled to run on CPUs, GPUs, and other hardware accelerators. OpenCL's [programming model](https://github.com/KhronosGroup/OpenCL-Guide/blob/main/chapters/opencl_programming_model.md) is not trivial, but to render a Mandelbrot set we need very few concepts:
+[OpenCL](https://github.com/KhronosGroup/OpenCL-Guide) is a framework for writing code that can be compiled to run on CPUs, GPUs, and other hardware accelerators. OpenCL's [programming model](https://github.com/KhronosGroup/OpenCL-Guide/blob/main/chapters/opencl_programming_model.md) is not trivial, but to render a Mandelbrot set we need very few concepts:
 
 - OpenCL programs are formed by units of code called *kernels*;
 - kernels are often written in *OpenCL C*, which is based on [C99](https://www.iso.org/standard/29237.html);
 - OpenCL programs get compiled on the host system and then executed on the hardware accelerator - which in my case is my GPU;
 - kernels operate over an N-dimensional data structure, which in the case of an image would be 2-dimensional;
-- each item in the N-dimensional data structure is called *work-item*, and a copy of the kernel running a single processing element.
+- each item in the N-dimensional data structure is called a *work-item*, and is a copy of the kernel running on a single processing element.
 
-OpenCL is available in Rust with [ocl](https://crates.io/crates/ocl). To use ocl add to `Cargo.toml`
+OpenCL is available in Rust with [ocl](https://crates.io/crates/ocl). To use `ocl`, add to `Cargo.toml`:
 
 ```
 [dependencies]
@@ -362,7 +362,7 @@ Armed with this knowledge, here is how to implement the Mandelbrot algorithm:
 ```rust
 fn opencl(w: u32, h: u32) -> image::RgbImage {
     let mut img = image::RgbImage::new(w as u32, h as u32);
-    // This is the kernel that we will be executed by each worker:
+    // This is the kernel that will be executed by each worker:
     //     buffer: output buffer where to store the number of iterations before the f(c) diverges.
     //             Accessing this memory is expensive, so it should be used sparingly. Since the
     //             output buffer is 1-dimensional, we will need to flatten the output by mapping
@@ -428,7 +428,7 @@ fn opencl(w: u32, h: u32) -> image::RgbImage {
 }
 ```
 
-For reference my GPU is a Nvidia RTX 2080. Let's run this version!
+For reference, my GPU is an Nvidia RTX 2080. Let's run this version!
 
 ```
 $ cargo build --release && ./target/release/mandelbrot
@@ -439,7 +439,7 @@ Executing opencl... 0.816s
 
 This is a much nicer improvement: 22.5x compared to the naive version for code that is way less complicated than the one based on AVX2.
 
-Using OpenCL incurs in some fixed costs: simply compiling the kernel and transferring on the GPU takes non-zero time (about 200ms on my machine), so the speed up rate increases for larger images.
+Using OpenCL incurs some fixed costs: simply compiling the kernel and transferring it to the GPU takes non-zero time (about 200ms on my machine), so the speedup rate increases for larger images.
 
 Trying to render a 56000 x 32000 image results in:
 
@@ -458,5 +458,6 @@ I suppose that I have no choice but to re-implement all of this in C/C++ and com
 Hold my compiler, I'm going in!
 
 # Footnotes
+
 [^1]: In this rendering I used [matplotlib's viridis color palette](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.viridis.html).
-[^2]: https://en.wikichip.org/wiki/intel/frequency_behavior
+[^2]: <https://en.wikichip.org/wiki/intel/frequency_behavior>

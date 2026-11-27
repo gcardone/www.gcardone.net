@@ -15,17 +15,17 @@ Recently a video of a man solving a particularly hard sudoku went viral:
 
 <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/yKf9aUIxdb4" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
-At the time of writing it was watched 930k times. It's a surprising video because this sudoku puzzle it contains only two clues, yet it has a unique solution. In this article I'll show how to solve it using [Microsoft Z3](https://github.com/Z3Prover/z3) with Python.
+At the time of writing, it was watched 930k times. It's a surprising video because this sudoku puzzle contains only two clues, yet it has a unique solution. In this article, I'll show how to solve it using [Microsoft Z3](https://github.com/Z3Prover/z3) with Python.
 
 Writing the solution took me longer than 25 minutes, so Simon Anthony in the video above was strictly faster than me :)
 
 # Miracle sudoku rules
 
-Unless you've been living under a rock you already know the rules of [modern sudoku](https://en.wikipedia.org/wiki/Sudoku): the goal is to fill a 9×9 grid divided into 3×3 subgrids (called _boxes_ or _blocks_) with all the digits from 1 to 9 included so that each row, columns, and box contains all the digits from 1 to 9 exactly once. A proper sudoku has only one solution.
+Unless you've been living under a rock, you already know the rules of [modern sudoku](https://en.wikipedia.org/wiki/Sudoku): the goal is to fill a 9×9 grid divided into 3×3 subgrids (called _boxes_ or _blocks_) with all the digits from 1 to 9 included so that each row, column, and box contains all the digits from 1 to 9 exactly once. A proper sudoku has only one solution.
 
 The *miracle sudoku* solved by Simon Anthony in the video above has several additional rules:
 
-- Any two cells separated by a knght's move or a king's move (in chess) cannot contain the same digit.
+- Any two cells separated by a knight's move or a king's move (in chess) cannot contain the same digit.
 - Any two orthogonally adjacent cells cannot contain consecutive digits.
 
 The sudoku in the video above starts with only two hints and yet it has a unique solution.
@@ -35,10 +35,10 @@ The sudoku in the video above starts with only two hints and yet it has a unique
 <tr>
 <td style="width:11%">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
-<td style="width:11%" style="border-right:2px solid black">&nbsp;</td>
+<td style="width:11%; border-right:2px solid black">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
-<td style="width:11%" style="border-right:2px solid black">&nbsp;</td>
+<td style="width:11%; border-right:2px solid black">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
@@ -46,10 +46,10 @@ The sudoku in the video above starts with only two hints and yet it has a unique
 <tr>
 <td style="width:11%">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
-<td style="width:11%" style="border-right:2px solid black">&nbsp;</td>
+<td style="width:11%; border-right:2px solid black">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
-<td style="width:11%" style="border-right:2px solid black">&nbsp;</td>
+<td style="width:11%; border-right:2px solid black">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
@@ -57,21 +57,10 @@ The sudoku in the video above starts with only two hints and yet it has a unique
 <tr style="border-bottom:2px solid black">
 <td style="width:11%">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
-<td style="width:11%" style="border-right:2px solid black">&nbsp;</td>
+<td style="width:11%; border-right:2px solid black">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
-<td style="width:11%" style="border-right:2px solid black">&nbsp;</td>
-<td style="width:11%">&nbsp;</td>
-<td style="width:11%">&nbsp;</td>
-<td style="width:11%">&nbsp;</td>
-</tr>
-<tr>
-<td style="width:11%">&nbsp;</td>
-<td style="width:11%">&nbsp;</td>
-<td style="width:11%" style="border-right:2px solid black">&nbsp;</td>
-<td style="width:11%">&nbsp;</td>
-<td style="width:11%">&nbsp;</td>
-<td style="width:11%" style="border-right:2px solid black">&nbsp;</td>
+<td style="width:11%; border-right:2px solid black">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
@@ -79,10 +68,21 @@ The sudoku in the video above starts with only two hints and yet it has a unique
 <tr>
 <td style="width:11%">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
-<td style="width:11%" style="border-right:2px solid black">1</td>
+<td style="width:11%; border-right:2px solid black">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
-<td style="width:11%" style="border-right:2px solid black">&nbsp;</td>
+<td style="width:11%; border-right:2px solid black">&nbsp;</td>
+<td style="width:11%">&nbsp;</td>
+<td style="width:11%">&nbsp;</td>
+<td style="width:11%">&nbsp;</td>
+</tr>
+<tr>
+<td style="width:11%">&nbsp;</td>
+<td style="width:11%">&nbsp;</td>
+<td style="width:11%; border-right:2px solid black">1</td>
+<td style="width:11%">&nbsp;</td>
+<td style="width:11%">&nbsp;</td>
+<td style="width:11%; border-right:2px solid black">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
@@ -90,10 +90,10 @@ The sudoku in the video above starts with only two hints and yet it has a unique
 <tr style="border-bottom:2px solid black">
 <td style="width:11%">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
-<td style="width:11%" style="border-right:2px solid black">&nbsp;</td>
+<td style="width:11%; border-right:2px solid black">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
-<td style="width:11%" style="border-right:2px solid black">&nbsp;</td>
+<td style="width:11%; border-right:2px solid black">&nbsp;</td>
 <td style="width:11%">2</td>
 <td style="width:11%">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
@@ -101,21 +101,10 @@ The sudoku in the video above starts with only two hints and yet it has a unique
 <tr>
 <td style="width:11%">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
-<td style="width:11%" style="border-right:2px solid black">&nbsp;</td>
+<td style="width:11%; border-right:2px solid black">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
-<td style="width:11%" style="border-right:2px solid black">&nbsp;</td>
-<td style="width:11%">&nbsp;</td>
-<td style="width:11%">&nbsp;</td>
-<td style="width:11%">&nbsp;</td>
-</tr>
-<tr>
-<td style="width:11%">&nbsp;</td>
-<td style="width:11%">&nbsp;</td>
-<td style="width:11%" style="border-right:2px solid black">&nbsp;</td>
-<td style="width:11%">&nbsp;</td>
-<td style="width:11%">&nbsp;</td>
-<td style="width:11%" style="border-right:2px solid black">&nbsp;</td>
+<td style="width:11%; border-right:2px solid black">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
@@ -123,10 +112,21 @@ The sudoku in the video above starts with only two hints and yet it has a unique
 <tr>
 <td style="width:11%">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
-<td style="width:11%" style="border-right:2px solid black">&nbsp;</td>
+<td style="width:11%; border-right:2px solid black">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
-<td style="width:11%" style="border-right:2px solid black">&nbsp;</td>
+<td style="width:11%; border-right:2px solid black">&nbsp;</td>
+<td style="width:11%">&nbsp;</td>
+<td style="width:11%">&nbsp;</td>
+<td style="width:11%">&nbsp;</td>
+</tr>
+<tr>
+<td style="width:11%">&nbsp;</td>
+<td style="width:11%">&nbsp;</td>
+<td style="width:11%; border-right:2px solid black">&nbsp;</td>
+<td style="width:11%">&nbsp;</td>
+<td style="width:11%">&nbsp;</td>
+<td style="width:11%; border-right:2px solid black">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
 <td style="width:11%">&nbsp;</td>
@@ -136,7 +136,7 @@ The sudoku in the video above starts with only two hints and yet it has a unique
 
 # Solving a traditional sudoku
 
-Let's start with solving a traditional sudoku. As first step we can encode a sudoku as a string with digits from `0` to `9`, and `.` to mark unknown cells. By convention we will refer to cells using coordinates using a 0-indexed (row, column) format: the top left cell is (0, 0), the top right cell is (0, 8), and the bottom right cell is (8, 8).
+Let's start with solving a traditional sudoku. As a first step, we can encode a sudoku as a string with digits from `1` to `9`, and `.` to mark unknown cells. By convention, we will refer to cells using coordinates in a 0-indexed (row, column) format: the top left cell is (0, 0), the top right cell is (0, 8), and the bottom right cell is (8, 8).
 
 We can use a couple of helper functions to read a sudoku:
 
@@ -162,7 +162,7 @@ def sudoku_from_string(s):
 
     Args:
         s: string representing a sudoku cell by cell from the top row to the
-        bottom road. Admissible characters are 0-9 for known values, . for
+        bottom row. Admissible characters are 1-9 for known values, . for
         unknown values, and \n (ignored).
 
     Returns:
@@ -211,17 +211,17 @@ def read_sudoku(f):
 Now that we can read a sudoku, we can solve it! The procedure is straightforward:
 
 1. Create a Z3 _solver_. A solver contains _variables_ and _constraints_, and will look for variables that satisfy all the constraints.
-1. For each variable, if it is in the same position of a hint of the sudoku, add a constraint requiring the variable to the equal to the hint
-1. Add all the sudoku constraints:
-   1. All variables must be between `0` and `9` (included)
-   1. All variables on the same column must be disjoint (i.e.: different from each other)
-   1. All variables on the same row must be disjoint
-   1. All variables in the same box must be disjoint
-1. Ask the solver if the constraint can be satisfied and if they can:
+2. For each variable, if it is in the same position as a hint of the sudoku, add a constraint requiring the variable to be equal to the hint.
+3. Add all the sudoku constraints:
+   1. All variables must be between `1` and `9` (included).
+   2. All variables on the same column must be disjoint (i.e., different from each other).
+   3. All variables on the same row must be disjoint.
+   4. All variables in the same box must be disjoint.
+4. Ask the solver if the constraints can be satisfied, and if they can:
    1. Get a _model_ from the solver.
-   1. Print the value of all the variables in the model.
+   2. Print the value of all the variables in the model.
 
-Z3's python API allows to translate these steps almost literally:
+Z3's Python API allows us to translate these steps almost literally:
 
 ```python
 # Main: read a sudoku from a file or stdin
@@ -254,7 +254,7 @@ def solve_sudoku(known_values):
             v = z3.Int('c_%d_%d' % (r, c))
             # Keep a reference to the Z3 variable in our sudoku.
             cells[r][c] = v
-            # If this cell contains a hint, then add a constraint that force
+            # If this cell contains a hint, then add a constraint that forces
             # the current variable to be equal to the hint.
             if (r, c) in known_values:
                 s.add(v == known_values[(r, c)])
@@ -285,7 +285,7 @@ def add_constraints(s, cells):
 
 ```
 
-`classic_constraint` is the function that receives a Z3 solver and the integer variables and implements the constraints of a classic sudoku:
+`classic_constraints` is the function that receives a Z3 solver and the integer variables and implements the constraints of a classic sudoku:
 
 ```python
 def classic_constraints(s, cells):
@@ -349,7 +349,7 @@ def sudoku_from_string(s):
 
     Args:
         s: string representing a sudoku cell by cell from the top row to the
-        bottom road. Admissible characters are 0-9 for known values, . for
+        bottom row. Admissible characters are 1-9 for known values, . for
         unknown values, and \n (ignored).
 
     Returns:
@@ -413,7 +413,7 @@ def solve_sudoku(known_values):
             v = z3.Int('c_%d_%d' % (r, c))
             # Keep a reference to the Z3 variable in our sudoku.
             cells[r][c] = v
-            # If this cell contains a hint, then add a constraint that force
+            # If this cell contains a hint, then add a constraint that forces
             # the current variable to be equal to the hint.
             if (r, c) in known_values:
                 s.add(v == known_values[(r, c)])
@@ -523,7 +523,7 @@ user    0m0.157s
 sys     0m0.016s
 ```
 
-Not too shabby for code that is expressive and does not use any specialized algorithms. We can now add the constraints to solve a miracle sudoku
+Not too shabby for code that is expressive and does not use any specialized algorithms. We can now add the constraints to solve a miracle sudoku.
 
 # Solving a miracle sudoku
 
@@ -603,9 +603,9 @@ def miracle_constraints(s, cells):
     for v, t in apply_constraints(cells, offsets, True):
         s.add(v != t)
 
-    # Orthogonal constraint: two orthogonally adjacent cell cannot contain
+    # Orthogonal constraint: two orthogonally adjacent cells cannot contain
     # consecutive digits. Note that this relationship is not symmetrical,
-    # so we ask apply_constraint to return both (cell_a, cell_b) and
+    # so we ask apply_constraints to return both (cell_a, cell_b) and
     # (cell_b, cell_a).
     offsets = ((0, -1), (1, 0), (0, 1), (-1, 0))
     for v, t in apply_constraints(cells, offsets, False):
@@ -650,7 +650,7 @@ The solution is - obviously - exactly the same as the one in the video at the to
 
 # Finding all possible miracle sudokus
 
-One could guess that there aren't many valid "miracle sudokus". An easy way to verify this conjecture is to ask Z3 to generate all solution. This can be done by getting one model from the Z3 solver and adding a constraint that requires at least one of the Z3 variables to be different from the values of the current solution, then ask the solver for a new model. Rinse and repeat until the solver can't return any more solutions.
+One could guess that there aren't many valid "miracle sudokus". An easy way to verify this conjecture is to ask Z3 to generate all solutions. This can be done by getting one model from the Z3 solver, adding a constraint that requires at least one of the Z3 variables to be different from the values of the current solution, and then asking the solver for a new model. Rinse and repeat until the solver can't return any more solutions.
 
 The changes to the core of `solve_sudoku` are trivial:
 
@@ -664,7 +664,7 @@ def solve_sudoku(known_values):
             # Z3 variables have a name
             v = z3.Int('c_%d_%d' % (r, c))
             cells[r][c] = v
-            # If this cell contains a hint, then add a constraint that force
+            # If this cell contains a hint, then add a constraint that forces
             # the current variable to be equal to the hint.
             if (r, c) in known_values:
                 s.add(v == known_values[(r, c)])
@@ -696,7 +696,7 @@ def solve_sudoku(known_values):
         print()
 ```
 
-Running this code takes 1m7sec on my Intel i7-8700K 3.70GHz, and it generates 72 different sudoku. However a valid sudoku can be rotated and mirrored and still be valid, so there are in fact only 9 different miracle sudokus.
+Running this code takes 1m7sec on my Intel i7-8700K 3.70GHz, and it generates 72 different sudokus. However, a valid sudoku can be rotated and mirrored and still be valid, so there are in fact only 9 different miracle sudokus.
 
 # Further reading
 
@@ -706,6 +706,6 @@ Håkan Kjellerstrand has an excellent [page on the analysis of miracle sudoku](h
 
 # Conclusion
 
-The last time I wrote a sudoku solver about 10 years ago I used [Knut's Algorithm X](https://en.wikipedia.org/wiki/Knuth%27s_Algorithm_X). It was great fun and the resulting binary took sub-millisecond time to solve a hard sudoku. However the implementation was hard to write and read. Compared to that experience Z3 provides a very intuitive way to solve constraint-based problems like sudoku.
+The last time I wrote a sudoku solver about 10 years ago I used [Knuth's Algorithm X](https://en.wikipedia.org/wiki/Knuth%27s_Algorithm_X). It was great fun and the resulting binary took sub-millisecond time to solve a hard sudoku. However, the implementation was hard to write and read. Compared to that experience, Z3 provides a very intuitive way to solve constraint-based problems like sudoku.
 
 
